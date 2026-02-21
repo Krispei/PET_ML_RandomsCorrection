@@ -11,15 +11,17 @@ def build_pet_geometry(sim):
     cyl = sim.add_volume('Tubs', 'cylindricalPET')
     cyl.mother = 'world'
     cyl.rmax = 220.0 * mm
-    cyl.rmin = 140.0 * mm
-    cyl.dz = 110.0 * mm 
+    cyl.rmin = 130.0 * mm
+    # Extend dz slightly to 115 to prevent Z-axis boundary clipping
+    cyl.dz = 115.0 * mm 
     cyl.material = 'G4_AIR'
     cyl.color = [1, 1, 1, 1] 
 
     # 2. RSECTOR
     rsector = sim.add_volume('Box', 'rsector')
     rsector.mother = 'cylindricalPET'
-    rsector.size = [80.0*mm, 80.0*mm, 220.0*mm] 
+    # Shrink the bounding box to 60x60 so they don't crash into each other
+    rsector.size = [60.0*mm, 60.0*mm, 220.0*mm] 
     rsector.material = 'G4_AIR'
     rsector.color = [1, 1, 0, 1]  #Yellow
 

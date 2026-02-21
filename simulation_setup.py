@@ -6,13 +6,37 @@ def setup_physics(sim):
     sim.physics_manager.enable_decay = True
     sim.physics_manager.set_production_cut('world', 'all', 1.0 * gate.g4_units.mm)
 
+import opengate as gate
+
 def setup_sources(sim):
-    # Setup the validation point source
-    test_src = sim.add_source('GenericSource', 'test_source')
-    test_src.particle = 'e+'
-    test_src.energy.mono = 0.0 * gate.g4_units.MeV
-    test_src.activity = 1e6 * gate.g4_units.Bq
-    test_src.attached_to = 'source_drop'
+    # ---------------------------------------------------------
+    # SOURCE 1: Fluorine-18 (Left Side)
+    # ---------------------------------------------------------
+    f18 = sim.add_source('GenericSource', 'F18_Source')
+    f18.particle = 'ion 9 18' 
+    f18.energy.mono = 0.0 * gate.g4_units.MeV
+    f18.activity = 2e6 * gate.g4_units.Bq 
+    
+    # Define spatial shape and location
+    f18.position.type = 'sphere'
+    f18.position.radius = 10.0 * gate.g4_units.mm
+    # Move 50 mm along the negative X-axis
+    f18.position.translation = [-50.0 * gate.g4_units.mm, 0.0, 0.0] 
+
+    # ---------------------------------------------------------
+    # SOURCE 2: Gallium-68 (Right Side)
+    # ---------------------------------------------------------
+    ga68 = sim.add_source('GenericSource', 'Ga68_Source')
+    ga68.particle = 'ion 31 68'
+    ga68.energy.mono = 0.0 * gate.g4_units.MeV
+    ga68.activity = 2e6 * gate.g4_units.Bq
+    
+    # Define spatial shape and location
+    ga68.position.type = 'sphere'
+    ga68.position.radius = 10.0 * gate.g4_units.mm
+    # Move 50 mm along the positive X-axis
+    ga68.position.translation = [50.0 * gate.g4_units.mm, 0.0, 0.0]
+
 
 def setup_digitizer(sim):
     # 1. Raw Hits
@@ -20,7 +44,7 @@ def setup_digitizer(sim):
     hits.attached_to = 'LYSO'
     hits.authorize_repeated_volumes = True
     hits.attributes = ['TotalEnergyDeposit', 'PostPosition', 'GlobalTime', 
-                       'EventID', 'PreStepUniqueVolumeID']
+                       'EventID', 'EventPosition', 'PreStepUniqueVolumeID']
 
     # 2. Adder
     adder = sim.add_actor('DigitizerAdderActor', 'Singles')
