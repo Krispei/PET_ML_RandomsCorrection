@@ -1,21 +1,14 @@
 import uproot
-import pandas as pd
+import numpy as np
 
-# 1. Open the ROOT file
-file = uproot.open('test_singles.root')
+tree = uproot.open("test_singles.root")["photopeak"]
+t = tree["GlobalTime"].array(library="np")
 
-# 2. Access the specific data table (TTree)
-# You can usually ignore the ';1' or include it explicitly
-tree = file['photopeak'] 
+t = np.sort(t)
 
-# 3. See what columns (branches) are available inside
-print("Available data columns:")
-print(tree.keys())
+print(t[:100])
 
-# 4. Convert the ROOT tree into a Pandas DataFrame for easy analysis
-# This loads all the arrays (Energy, Time, EventID, etc.) into a table
-df = tree.arrays(library="pd")
+print(np.min(t), np.max(t))
 
-# 5. Display the first few rows of your actual Singles data
-print("\nFirst 5 Singles recorded:")
-print(df.head())
+
+print(np.min(np.diff(np.sort(t))))

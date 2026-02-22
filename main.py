@@ -5,9 +5,14 @@ from build_scanner import build_pet_geometry
 from test_phantom import build_test_phantom
 import simulation_setup as setup  # Import our new module
 
+m = gate.g4_units.m
+s = gate.g4_units.s
+
+
 # 1. COMMAND LINE ARGS
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=1234)
+parser.add_argument('--threads', type=int, default=1)
 parser.add_argument('--start', type=float, default=0.0)
 parser.add_argument('--stop', type=float, default=1)
 parser.add_argument('--check-geo', action='store_true', help='Visualize geometry and exit without running')
@@ -15,9 +20,8 @@ args = parser.parse_args()
 
 # 2. INITIALIZATION
 sim = gate.Simulation()
-sim.number_of_threads = 1
-sim.world.size = [4.0 * gate.g4_units.m] * 3
-sim.volume_manager.add_material_database('GateMaterials.db')
+sim.world.size = [4.0 * m] * 3
+sim.volume_manager.add_material_database('/Users/wonupark/PET_ML_RandomsCorrection/config/GateMaterials.db')
 sim.random_engine = 'MersenneTwister'
 sim.random_seed = args.seed
 sim.check_volumes_overlap = False
@@ -32,7 +36,7 @@ setup.setup_sources(sim)
 setup.setup_digitizer(sim)
 
 # 5. EXECUTION
-sim.run_timing_intervals = [[args.start * gate.g4_units.s, args.stop * gate.g4_units.s]]
+sim.run_timing_intervals = [[args.start * s, args.stop * s]]
 
 if args.check_geo:
     print("🔍 Geometry Check Mode: Initializing viewer...")
@@ -45,7 +49,7 @@ if args.check_geo:
     sim.check_volumes_overlap = False
     
     # 3. The Trick: Set the time interval from 0 to 0
-    sim.run_timing_intervals = [[0.0 * gate.g4_units.s, 0.0 * gate.g4_units.s]]
+    sim.run_timing_intervals = [[0.0 * s, 0.0 * s]]
     
     # 4. Call run(). It will build the geometry, open the GUI, and simulate 0 decays.
     sim.run()
@@ -56,7 +60,7 @@ else:
     # Standard Production Mode
     sim.number_of_threads = args.threads
     sim.visu = False
-    sim.run_timing_intervals = [[args.start * gate.g4_units.s, args.stop * gate.g4_units.s]]
-    
+    sim.run_timing_intervals = [[args.start * s, args.stop * s]]
+
     print(f"🚀 Running physics simulation with {sim.number_of_threads} threads...")
     sim.run()

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # 1. Load the data
-file = uproot.open("test_singles.root")
+file = uproot.open("/Users/wonupark/PET_ML_RandomsCorrection/test_singles.root")
 tree = file["photopeak"]
 df = tree.arrays(library="pd")
 

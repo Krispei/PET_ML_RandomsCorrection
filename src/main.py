@@ -14,11 +14,12 @@ s = gate.g4_units.s # Seconds
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=1234)
 parser.add_argument('--start', type=float, default=0.0)
-parser.add_argument('--stop', type=float, default=0.5)
+parser.add_argument('--stop', type=float, default=1)
 args = parser.parse_args()
 
 # 2. INITIALIZATION
 sim = gate.Simulation()
+sim.number_of_threads = 8
 sim.world.size = [4.0 * m] * 3
 sim.volume_manager.add_material_database('/Users/wonupark/PET_ML_RandomsCorrection/config/GateMaterials.db')
 sim.random_engine = 'MersenneTwister'
@@ -38,7 +39,7 @@ setup.setup_digitizer(sim)
 sim.run_timing_intervals = [[args.start * s, args.stop * s]]
 
 # --- VISUALIZATION ---
-sim.visu = True
+sim.visu = False
 sim.visu_type = 'vrml' 
 
 sim.run()
