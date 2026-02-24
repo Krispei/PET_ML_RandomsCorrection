@@ -2,7 +2,7 @@
 import opengate as gate
 import argparse
 from build_scanner import build_pet_geometry
-from test_phantom import build_test_phantom
+from NEMA_NU2_phantom import build_test_phantom
 import simulation_setup as setup 
 
 # Units

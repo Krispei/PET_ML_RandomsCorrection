@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+import opengate as gate
 
 @njit
 def coincidence_kernel(times, vols, energies, xs, ys, zs, events, window):
@@ -28,7 +29,6 @@ def coincidence_kernel(times, vols, energies, xs, ys, zs, events, window):
             out[count,2] = zs[i]
             out[count,3] = energies[i]
             out[count,4] = times[i]
-
             # Detector 2
             out[count,5] = xs[k]
             out[count,6] = ys[k]
@@ -45,7 +45,7 @@ def coincidence_kernel(times, vols, energies, xs, ys, zs, events, window):
 import uproot
 import pandas as pd
 
-def sort_coincidences(input_file, window_ns=10000):
+def sort_coincidences(input_file, window_ns=4):
 
     tree = uproot.open(input_file)["photopeak"]
 
@@ -100,7 +100,17 @@ def sort_coincidences(input_file, window_ns=10000):
     n_true = coinc_df['is_true'].sum()       # 1s → true events
     n_false = len(coinc_df) - n_true        # 0s → false events
 
+
     print(f"Number of true coincidences: {n_true}")
     print(f"Number of random coincidences: {n_false}")
+    print(f"Randoms percentage : {round(n_false/len(coinc_df)*100, 2)}%")
 
-sort_coincidences("test_singles.root")
+    total_time_s = times[-1] / 1e9
+    singles_count_rate = round( (len(df['GlobalTime']) / total_time_s) / 1000, 2)
+    coincidence_count_rate = round( (len(coinc_df) / total_time_s ) / 1000, 2)
+
+    print(f"Singles count rate : {singles_count_rate} kcps")
+    print(f"Coincidence count rate : {coincidence_count_rate} kcps")
+
+
+sort_coincidences("test_f18_singles.root")
