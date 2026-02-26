@@ -1,19 +1,19 @@
 sim:
   start: 0.0
-  stop: 0.5
-  seed: 20001
+  stop: 0.02
+  seed: 20013
   threads: 1
   check_geo: false
-  output_filename: "0.5s_20001_F18_10MBq_0_0_0" #Duration_seed_Isotope1_MBq_offset_Isotope2_MBq_offset
+  output_filename: "0.02s_20013_F18_100Mbq_0_45_0_Mn52_100MBq_0_0_0" #Duration_seed_Isotope1_MBq_offset_Isotope2_MBq_offset
 
 digitizer:
   energy_window_keV: [100, 2000]
 
 phantom:
   include_f18: true
-  f18_offset_mm: [0, 0, 0]
-  f18_activity_bq: 10.0e6
+  f18_offset_mm: [0, 45, 0]
+  f18_activity_bq: 100e6
 
-  include_Mn52: false
-  Mn52_offset_mm: [45.0, 0, 0]
-  Mn52_activity_bq: 1.0e6
+  include_Mn52: true
+  Mn52_offset_mm: [0, 0, 0]
+  Mn52_activity_bq: 100.0e6
