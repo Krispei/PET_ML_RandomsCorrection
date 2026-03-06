@@ -1,8 +1,7 @@
 '''
-    This script contains functions to convert ROOT files to windowed data.
-    It saves the data as torch graph objects 
-
-'''
+    This code takes all the root files in the Data folder and creates windows. 
+    It saves the data as torch graph objects
+''' 
 
 import torch
 import uproot 
@@ -10,11 +9,24 @@ from tqdm import tqdm
 import numpy as np
 from torch_geometric.data import Data
 import opengate as gate
+import glob
+import os
+
+"""
+    CONFIGURATION:
+
+    input a folder path where all the .ROOT files live. 
+    input a folder pash where you want all the saved pytorch graph objects to go
+
+"""
+
+INPUT_FOLDER_PATH = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\ROOT"
+OUTPUT_FOLDER_PATH = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\WINDOWED"
 
 def root_to_window(input_file, save_path, window_ns=10):
+    
+    #Loading data from ROOT file
     tree = uproot.open(input_file)["photopeak"]
-
-    #Load raw data from the ROOT file
     raw_data = tree.arrays([
         "GlobalTime",
         "TotalEnergyDeposit",
@@ -22,6 +34,7 @@ def root_to_window(input_file, save_path, window_ns=10):
         "PostPosition_Y",
         "PostPosition_Z",
         "EventID"], library="np")
+
 
     #Sort the data by GlobalTime:
     #First create the correct index order
@@ -35,7 +48,7 @@ def root_to_window(input_file, save_path, window_ns=10):
     sorted_event = raw_data["EventID"][sorted_indices]
 
     #Settings for the windowing:
-    window_width = window_ns * gate.g4_units.ns  # Convert ns to Geant4 time units
+    window_width = window_ns * gate.g4_units.ns 
     start_ptr = 0
     total_events = len(sorted_time)
 
@@ -65,7 +78,6 @@ def root_to_window(input_file, save_path, window_ns=10):
             normalized_window_time = (windowed_time - windowed_time[0]) / window_width
 
             # Node feature matricies
-
             x = torch.tensor(np.column_stack([windowed_energy, windowed_pos, normalized_window_time]), dtype=torch.float)
 
             num_nodes = end_ptr - start_ptr
@@ -98,10 +110,22 @@ def root_to_window(input_file, save_path, window_ns=10):
 
     return dataset
 
-input_filename = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\0.1s_20003_F18_50MBq_0_0_0.root"
-output_filename = "test"
-root_to_window(input_filename, output_filename)
+def main():
 
+    root_files = glob.glob(INPUT_FOLDER_PATH + "/*.root")
 
+    for root_file in root_files:
+        
+        print(f"Processing {os.path.basename(root_file)[:-5]}")
+
+        filename = os.path.basename(root_file)[:-5]
+
+        output_file = OUTPUT_FOLDER_PATH + "/" + filename
+
+        root_to_window(root_file, output_file, window_ns=15)
+
+if __name__ == "__main__":
+
+    main()
 
 
