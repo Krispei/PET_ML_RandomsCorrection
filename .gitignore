@@ -4,3 +4,4 @@ Data/
 *.csv
 *.wrl
 test
+*.pt

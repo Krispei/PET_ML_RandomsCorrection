@@ -9,23 +9,26 @@ from model import PET_Randoms_GNN  # adjust import to wherever your model is def
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
-DATA_PATH       = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\test"
-SAVE_PATH       = "best_model.pt"
-BATCH_SIZE      = 32
-EPOCHS          = 10
-LR              = 1e-3
+BATCH_SIZE      = 256
+EPOCHS          = 100
+LR              = 2.5e-3
+WEIGHT_DECAY    = 1e-4
+MOMENTUM        = 0.90
 HIDDEN_DIM      = 128
 NUM_GAT_LAYERS  = 2
 HEADS           = 4
 DROPOUT         = 0.2
+precision_multiplier = 1
+CLASSIFICATION_THRESHOLD = 0.5
+SAVE_PATH       = f"Model_BS{BATCH_SIZE}_LR{LR}_HD{HIDDEN_DIM}_NGL{NUM_GAT_LAYERS}_H{HEADS}_D{DROPOUT}_CT{CLASSIFICATION_THRESHOLD}.pt"
 DEVICE          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Using device: {DEVICE}")
 
 # ── Data ───────────────────────────────────────────────────────────────────────
 
-train_path = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\training_dataset"
-val_path = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\validation_dataset"
+train_path = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\ML_datasets\training_dataset"
+val_path = rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\ML_datasets\validation_dataset"
 
 train = torch.load(train_path, weights_only=False)
 val = torch.load(val_path, weights_only=False)
@@ -43,8 +46,6 @@ def is_valid(data):
 train_dataset = [d for d in train if is_valid(d)]
 val_dataset = [d for d in val if is_valid(d)]
 
-total_dataset = train_dataset.extend(val_dataset)
-
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 val_loader   = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False)
 
@@ -58,6 +59,7 @@ for data in train_dataset:
     num_neg += (data.y == 0).sum().item()
 
 pos_weight = torch.tensor([num_neg / num_pos], dtype=torch.float).to(DEVICE)
+precision_multiplier = pos_weight
 
 print(f"Pos edges: {int(num_pos):,} | Neg edges: {int(num_neg):,} | pos_weight: {pos_weight.item():.2f}")
 
@@ -71,7 +73,7 @@ model = PET_Randoms_GNN(
     dropout_rate=DROPOUT
 ).to(DEVICE)
 
-optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=0.9, weight_decay=1e-4)
+optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM, weight_decay=WEIGHT_DECAY)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=5, factor=0.5)
 criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
@@ -99,7 +101,6 @@ def train_one_epoch(loader, epoch):
     return total_loss / len(loader)
 
 @torch.no_grad()
-
 def evaluate(loader, epoch):
     model.eval()
     total_loss = 0
@@ -116,24 +117,26 @@ def evaluate(loader, epoch):
         loss = criterion(out, batch.y)
         total_loss += loss.item()
 
-        preds = (torch.sigmoid(out) > 0.5).float()
+        preds = (torch.sigmoid(out) > CLASSIFICATION_THRESHOLD).float()
 
         tp += ((preds == 1) & (batch.y == 1)).sum().item()
         fp += ((preds == 1) & (batch.y == 0)).sum().item()
         tn += ((preds == 0) & (batch.y == 0)).sum().item()
         fn += ((preds == 0) & (batch.y == 1)).sum().item()
-
+        
         pbar.set_postfix(loss=f"{loss.item():.4f}")
 
     avg_loss  = total_loss / len(loader)
 
     precision = tp / (tp + fp + 1e-8)
-    recall    = tp / (tp + fn + 1e-8)
-    f1        = 2 * precision * recall / (precision + recall + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
 
+    f1 = 2 * precision * recall / (precision + recall + 1e-8)
+    beta = 0.5
+    f05 = (1 + beta**2) * (precision * recall) / ((beta**2 * precision) + recall + 1e-8)
     accuracy  = (tp + tn) / (tp + fp + tn + fn + 1e-8)
 
-    return avg_loss, accuracy, precision, recall, f1
+    return avg_loss, accuracy, precision, recall, f1, f05
 
 # ── Training Loop ──────────────────────────────────────────────────────────────
 
@@ -144,7 +147,7 @@ epoch_pbar = tqdm(range(1, EPOCHS + 1), desc="Training", unit="epoch")
 
 for epoch in epoch_pbar:
     train_loss = train_one_epoch(train_loader, epoch)
-    val_loss, accuracy, precision, recall, f1 = evaluate(val_loader, epoch)
+    val_loss, accuracy, precision, recall, f1, f05= evaluate(val_loader, epoch)
 
     scheduler.step(val_loss)
 
@@ -183,7 +186,6 @@ for epoch in epoch_pbar:
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
-
 ax1.plot(history["train_loss"], label="Train Loss")
 ax1.plot(history["val_loss"],   label="Val Loss")
 ax1.set_xlabel("Epoch"); ax1.set_ylabel("Loss")
@@ -194,7 +196,9 @@ ax2.set_xlabel("Epoch"); ax2.set_ylabel("F1")
 ax2.set_title("Validation F1"); ax2.legend()
 
 plt.tight_layout()
-plt.savefig("training_curves.png", dpi=150)
+
+training_curve_file = f"training_curves_BS{BATCH_SIZE}_LR{LR}_WD{WEIGHT_DECAY}_M{MOMENTUM}_HD{HIDDEN_DIM}_NGL{NUM_GAT_LAYERS}_H{HEADS}_D{DROPOUT}_PM{2}_CT{CLASSIFICATION_THRESHOLD}.png"
+plt.savefig("Base_Test", dpi=150)
 plt.show()
 
 print(f"\nTraining complete. Best val loss: {best_val_loss:.4f} — model saved to '{SAVE_PATH}'") 
