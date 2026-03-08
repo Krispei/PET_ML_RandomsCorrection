@@ -10,17 +10,17 @@ from model import PET_Randoms_GNN  # adjust import to wherever your model is def
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 BATCH_SIZE      = 256
-EPOCHS          = 100
+EPOCHS          = 75
 LR              = 2.5e-3
 WEIGHT_DECAY    = 1e-4
 MOMENTUM        = 0.90
-HIDDEN_DIM      = 128
+HIDDEN_DIM      = 256
 NUM_GAT_LAYERS  = 2
-HEADS           = 4
+HEADS           = 8
 DROPOUT         = 0.2
 precision_multiplier = 1
 CLASSIFICATION_THRESHOLD = 0.5
-SAVE_PATH       = f"Model_BS{BATCH_SIZE}_LR{LR}_HD{HIDDEN_DIM}_NGL{NUM_GAT_LAYERS}_H{HEADS}_D{DROPOUT}_CT{CLASSIFICATION_THRESHOLD}.pt"
+SAVE_PATH       = f"arch_Model_BS{BATCH_SIZE}_LR{LR}_HD{HIDDEN_DIM}_NGL{NUM_GAT_LAYERS}_H{HEADS}_D{DROPOUT}_CT{CLASSIFICATION_THRESHOLD}.pt"
 DEVICE          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Using device: {DEVICE}")
@@ -198,7 +198,7 @@ ax2.set_title("Validation F1"); ax2.legend()
 plt.tight_layout()
 
 training_curve_file = f"training_curves_BS{BATCH_SIZE}_LR{LR}_WD{WEIGHT_DECAY}_M{MOMENTUM}_HD{HIDDEN_DIM}_NGL{NUM_GAT_LAYERS}_H{HEADS}_D{DROPOUT}_PM{2}_CT{CLASSIFICATION_THRESHOLD}.png"
-plt.savefig("Base_Test", dpi=150)
+plt.savefig("Base_Test2", dpi=150)
 plt.show()
 
 print(f"\nTraining complete. Best val loss: {best_val_loss:.4f} — model saved to '{SAVE_PATH}'") 
