@@ -1,4 +1,7 @@
-# simulation_setup.py
+'''
+    This code contains the detector settings as well as the physics settings
+'''
+
 import opengate as gate
 
 def setup_physics(sim):
@@ -7,21 +10,18 @@ def setup_physics(sim):
     sim.physics_manager.set_production_cut('world', 'all', 1.0 * gate.g4_units.mm)
 
 def setup_digitizer(sim, energy_window_keV, output_filename):
-    # 1. Raw Hits
     hits = sim.add_actor('DigitizerHitsCollectionActor', 'hits')
     hits.attached_to = 'LYSO'
     hits.authorize_repeated_volumes = True
     hits.attributes = ['TotalEnergyDeposit', 'PostPosition', 'GlobalTime', 
                        'EventID', 'EventPosition', 'PreStepUniqueVolumeID']
 
-    # 2. Adder
     adder = sim.add_actor('DigitizerAdderActor', 'Singles')
     adder.attached_to = 'LYSO'
     adder.input_digi_collection = 'hits'
     adder.policy = 'EnergyWeightedCentroidPosition'
     adder.authorize_repeated_volumes = True
 
-    # 3. Blurring
     blur = sim.add_actor('DigitizerBlurringActor', 'BlurredSingles')
     blur.attached_to = 'LYSO'
     blur.input_digi_collection = 'Singles'
@@ -37,7 +37,6 @@ def setup_digitizer(sim, energy_window_keV, output_filename):
     time_blur.blur_method = 'Gaussian'
     time_blur.blur_sigma = 0.071 * gate.g4_units.ns
 
-    # 4. Energy Window & Output
     window = sim.add_actor('DigitizerEnergyWindowsActor', 'FilteredSingles')
     window.input_digi_collection = 'TimeBlur'
     window.channels = [{'name': 'photopeak', 'min': energy_window_keV[0] * gate.g4_units.keV, 

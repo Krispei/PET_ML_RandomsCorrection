@@ -57,19 +57,19 @@ class PET_Randoms_GNN(nn.Module):
         node_i_context = h[row]
         node_j_context = h[col]
         
-        # Extract physics from the og input tensor 'x'
-        # [Energy(0), X(1), Y(2), Z(3), T_rel(4)]
-        
-        # Calculate delta t
+     
         delta_t = torch.abs(x[row, 4] - x[col, 4]).view(-1, 1)
         
         # Calculate Euclidean Distance between the crystals
         dist = torch.norm(x[row, 1:4] - x[col, 1:4], dim=1).view(-1, 1)
         
-        # Shape: (Num_Edges, 258)
+        # TWEAK AFTER ERROR ANALYSIS: delta energy
+        #delta_e = torch.abs(x[row, 0] - x[col, 0]).view(-1,1)
+
+        # Shape: (Num_Edges, 258) # NEW AFTER ERROR ANALYSIS:
         edge_features = torch.cat([node_i_context, node_j_context, delta_t, dist], dim=1)
         
-        # (Num_Edges, 258) -> (Num_Edges, 1)
+        # (Num_Edges, 258) -> (Num_Edges, 1) 
         out = self.edge_classifier(edge_features)
         
         # Flatten 

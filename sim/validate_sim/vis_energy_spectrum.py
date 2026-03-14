@@ -2,13 +2,10 @@ import uproot
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# 1. Load the data
-file = uproot.open("/Users/wonupark/PET_ML_RandomsCorrection/test_singles.root")
+file = uproot.open(rf"C:\Users\Krisps\PET_ML_RandomsCorrection\Data\temp\0.1s_20010_Mn52_80MBq_45_0_0.root")
 tree = file["photopeak"]
 df = tree.arrays(library="pd")
 
-# 2. Visualize the Hit Map (Y vs Z)
-# This shows you the face of your detector ring "unrolled"
 plt.figure(figsize=(10, 6))
 plt.scatter(df['PostPosition_Z'], df['PostPosition_Y'], 
             c=df['TotalEnergyDeposit'], cmap='viridis', s=1, alpha=0.5)
